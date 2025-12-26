@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>教师教学管理系统</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/iview@1.0.1/dist/styles/iview.css">
+    <script type="text/javascript" src="https://v1.vuejs.org/js/vue.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/iview@1.0.1/dist/iview.min.js"></script>
+    <script src="https://at.alicdn.com/t/font_1296423_92fclenj85a.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/qs.min.js"></script>
+</head>
+
+<body>
+<style>
+    /* --- 全局样式 (与学生端完全一致) --- */
+    #app, html, body { margin: 0; padding: 0; width: 100%; height: 100%; cursor: default; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f5f7f9; }
+    [v-cloak] { display: none; }
+
+    /* 布局框架 */
+    .layout { border: 1px solid #d7dde4; background: #f5f7f9; position: relative; height: 100vh; }
+    .layout-breadcrumb { padding: 10px 15px 0; }
+    .layout-content { height: 83vh; margin: 15px; overflow: auto; background: #fff; border-radius: 4px; }
+    .layout-content-main { padding: 20px; }
+    .layout-menu-left { background: #464c5b; height: 100%; }
+    .layout-header { height: 60px; background: #fff; box-shadow: 0 1px 1px rgba(0, 0, 0, .1); }
+    .title_content { display: flex; font-family: fontKai; justify-content: center; align-items: center; font-size: 35px; font-weight: bolder; color: #000; letter-spacing: 3px; }
+
+    .layout-logo-left { width: 90%; height: 30px; background: #5b6270; border-radius: 3px; margin: 15px auto; color: #d7dde4; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+    .retut { cursor: pointer; border-bottom: 1px solid transparent; }
+    .retut:hover { border-bottom: 1px solid #fff; }
+
+    /* --- 卡片式列表样式 (复用) --- */
+    .course-grid { display: flex; flex-wrap: wrap; padding: 10px; }
+    .course-card { width: 300px; margin: 15px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); transition: all 0.3s ease; border: 1px solid #eee; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .course-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12); border-color: #5cadff; }
+    .card-header-bar { height: 6px; background: linear-gradient(90deg, #2d8cf0, #5cadff); } /* 教师端用蓝色系 */
+    .card-content { padding: 20px; flex-grow: 1; }
+    .course-title { font-size: 18px; font-weight: bold; color: #17233d; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .credit-badge { background: #e8f4ff; color: #2d8cf0; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .course-info-item { margin-bottom: 10px; color: #515a6e; font-size: 14px; display: flex; align-items: center; }
+    .course-info-item i { margin-right: 8px; width: 20px; text-align: center; color: #808695; }
+
+    /* 教师特有的统计展示 */
+    .stat-row { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; }
+    .stat-item { text-align: center; flex: 1; }
+    .stat-val { font-size: 18px; font-weight: bold; color: #2d8cf0; }
+    .stat-label { font-size: 12px; color: #808695; }
+
+    .card-footer { padding: 15px 20px; border-top: 1px solid #f8f8f9; background: #fafafa; text-align: right; }
+
+    .btn-select { background: #2d8cf0; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: background 0.2s; outline: none; }
+    .btn-select:hover { background: #57a3f3; }
+
+    /* 成绩录入表格样式 (保留之前的优化) */
+    .modern-table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px; }
+    .modern-table th { background: #f8f9fa; color: #515a6e; font-weight: 600; padding: 12px; border-bottom: 2px solid #e8eaec; text-align: center;}
+    .modern-table td { padding: 12px; border-bottom: 1px solid #e8eaec; color: #515a6e; text-align: center;}
+    .modern-table tr:hover { background: #fcfcfc; }
+    .grade-input { width: 60px; padding: 4px 8px; border: 1px solid #dcdee2; border-radius: 4px; text-align: center; }
+    .grade-input:focus { border-color: #2d8cf0; box-shadow: 0 0 0 2px rgba(45,140,240,.2); }
+
+    /* 表单和按钮复用 */
+    .box_singal { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .singal_name { width: 40%; height: 40px; border: 1px solid #dcdee2; margin-bottom: 20px; border-radius: 4px; display: flex; }
+    .singal_name_title { width: 100px; background: #f8f8f9; border-right: 1px solid #dcdee2; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #515a6e; }
+    .name_content { flex: 1; border: none; padding: 0 10px; outline: none; }
+    .singal_stb { width: 120px; height: 40px; background: #2d8cf0; color: #fff; border-radius: 4px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+
+    /* 分页 */
+    .fenye { margin-top: 20px; display: flex; justify-content: center; align-items: center; width: 100%; }
+    .page-btn { padding: 5px 15px; margin: 0 10px; border: 1px solid #dcdee2; border-radius: 4px; cursor: pointer; background: #fff; }
+    .page-btn:hover { border-color: #2d8cf0; color: #2d8cf0; }
+</style>
+
+<div id="app" @click='app()' v-cloak>
+    <div class="layout">
+        <Row type="flex" style="height: 100%;">
+            <i-col span="5" class="layout-menu-left">
+                <Menu active-key="2-1" theme="dark" width="auto" :open-keys="['2']">
+                    <div class="layout-logo-left">
+                        <p>{{lists.teacher_name}} 老师</p>
+                        <p class="retut" @click='exit'>退出</p>
+                    </div>
+                    <Submenu key="1">
+                        <template slot="title"><Icon type="ios-navigate"></Icon>个人中心</template>
+                        <Menu-item key="1-1" @click='changeTitle(0,"个人中心","个人信息")'>基本信息</Menu-item>
+                        <Menu-item key="1-2" @click='changeTitle(1,"个人中心","修改密码")'>修改密码</Menu-item>
+                    </Submenu>
+                    <Submenu key="2">
+                        <template slot="title"><Icon type="ios-book"></Icon>教学管理</template>
+                        <Menu-item key="2-1" @click='chooseCourse(2,"教学管理","我的课程")'>我的课程</Menu-item>
+                    </Submenu>
+                </Menu>
+            </i-col>
+
+            <i-col span="19">
+                <div class="layout-header title_content">教师教学管理系统</div>
+                <div class="layout-breadcrumb">
+                    <Breadcrumb>
+                        <Breadcrumb-item>首页</Breadcrumb-item>
+                        <Breadcrumb-item>{{title}}</Breadcrumb-item>
+                        <Breadcrumb-item>{{name}}</Breadcrumb-item>
+                    </Breadcrumb>
+                </div>
+
+                <div class="layout-content">
+                    <div class="layout-content-main">
+
+                        <div v-show="flag===0" class="box_singal">
+                            <h3>基本信息修改</h3><br>
+                            <div class="singal_name"><div class="singal_name_title">姓名</div><input type="text" class="name_content" v-model='lists.teacher_name'></div>
+                            <div class="singal_name"><div class="singal_name_title">工号</div><input type="text" class="name_content" :value="lists.teacher_tno" readonly></div>
+                            <div class="singal_name"><div class="singal_name_title">年龄</div><input type="text" class="name_content" v-model='lists.teacher_age'></div>
+                            <div class="singal_name"><div class="singal_name_title">出生日期</div><input type="date" class="name_content" v-model='lists.teacher_data'></div>
+                            <div class="singal_name"><div class="singal_name_title">电话</div><input type="text" class="name_content" v-model='lists.teacher_phone'></div>
+                            <div class="singal_name"><div class="singal_name_title">地址</div><input type="text" class="name_content" v-model='lists.teacher_address'></div>
+                            <div class="singal_stb" @click='sureInfo'>保存修改</div>
+                        </div>
+
+                        <div v-show="flag===1" style="display:flex; justify-content:center;">
+                            <div style="width:300px; padding:20px; border:1px solid #eee; border-radius:8px;">
+                                <h3 style="text-align:center; margin-bottom:20px;">修改密码</h3>
+                                <div style="margin-bottom:15px;">
+                                    <input type="password" placeholder="请输入新密码" v-model='resPwdf' style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <div style="margin-bottom:20px;">
+                                    <input type="password" placeholder="确认新密码" v-model='resPwdt' style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <button class="btn-select" style="width:100%;" @click='resPwd'>确认修改</button>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===2">
+                            <div class="course-grid">
+                                <div class="course-card" v-for="(index, item) in items">
+                                    <div class="card-header-bar"></div>
+                                    <div class="card-content">
+                                        <div class="course-title">
+                                            <span>{{item.course.course_name}}</span>
+                                            <span class="credit-badge">{{item.course.credit}} 学分</span>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i>🆔</i> <span>课程号：{{item.course.course_cno}}</span>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i>🕒</i> <span>时间：周{{item.course.classTime.class_weekend}} / 第{{item.course.classTime.class_time}}节</span>
+                                        </div>
+
+                                        <div class="stat-row">
+                                            <div class="stat-item">
+                                                <div class="stat-val">{{item.course.selected_num || 0}}</div>
+                                                <div class="stat-label">已选人数</div>
+                                            </div>
+                                            <div class="stat-item">
+                                                <div class="stat-val">{{item.course.max_num || 50}}</div>
+                                                <div class="stat-label">容量上限</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button class="btn-select" @click="studentList(item.course.course_cno)">
+                                            <Icon type="edit"></Icon> 录入成绩
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="fenye">
+                                <div class="page-btn" @click='xksyy'>上一页</div>
+                                <span>第 {{xkPage}} 页 / 共 {{xkPageNo}} 页</span>
+                                <div class="page-btn" @click='xkxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===3">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <h3>课程：{{currentCourseCno}} - 学生成绩管理</h3>
+                                <button class="btn-select" style="background:#fff; border:1px solid #dcdee2; color:#515a6e;" @click="backToCourseList">返回列表</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>平时成绩 (40%)</th>
+                                    <th>期末成绩 (60%)</th>
+                                    <th>总评成绩</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index, item) in xuanke">
+                                    <td>{{item.student.student_sno}}</td>
+                                    <td>{{item.student.student_name}}</td>
+                                    <td>{{item.student.student_class}}</td>
+                                    <td><input type="text" class="grade-input" v-model="item.daily_score" @input="calcTotal(item)"></td>
+                                    <td><input type="text" class="grade-input" v-model="item.exam_score" @input="calcTotal(item)"></td>
+                                    <td style="font-weight:bold; color:#2d8cf0;">{{item.total_score}}</td>
+                                    <td>
+                                        <button class="btn-select" style="padding:4px 12px; font-size:12px;" @click="submitOne(item)">保存</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="fenye">
+                                <div class="page-btn" @click='syy'>上一页</div>
+                                <span>第 {{pageNo}} 页</span>
+                                <div class="page-btn" @click='xyy'>下一页</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                flag: 2,
+                title: '教学管理',
+                name: '我的课程',
+                lists: {},      // 教师信息
+                items: [],      // 课程列表
+                xuanke: [],     // 学生成绩列表
+
+                userName: '',   // 工号
+
+                // 分页
+                xkPage: 1,
+                xkPageNo: 1,
+                pageNo: 1,
+
+                // 密码修改
+                resPwdf: '',
+                resPwdt: '',
+
+                currentCourseCno: '' // 当前操作的课程号
+            }
+        },
+        methods: {
+            // 实时计算总分
+            calcTotal(item) {
+                let d = parseFloat(item.daily_score) || 0;
+                let e = parseFloat(item.exam_score) || 0;
+                item.total_score = Math.round(d * 0.4 + e * 0.6);
+            },
+
+            // 加载我的课程
+            loadCourseList() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/courseTea",
+                    transformRequest: [function (data) { return Qs.stringify(data); }],
+                    data: {
+                        pageNopss: this.xkPage,
+                        teacher_tno: this.userName
+                    }
+                }).then(result => {
+                    this.items = result.data.teacher;
+                    this.xkPageNo = result.data.pageNo;
+                })
+            },
+
+            // 加载学生名单
+            loadStudentList() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/teacher/scoreTea",
+                    transformRequest: [function (data) { return Qs.stringify(data); }],
+                    data: {
+                        pageNopss: this.pageNo,
+                        course_cno: this.currentCourseCno,
+                        teacher_tno: this.userName
+                    }
+                }).then(result => {
+                    this.xuanke = result.data.score;
+                })
+            },
+
+            // 进入成绩录入
+            studentList(cno) {
+                this.flag = 3;
+                this.title = '教学管理';
+                this.name = '成绩录入';
+                this.currentCourseCno = cno;
+                this.pageNo = 1;
+                this.loadStudentList();
+            },
+
+            // [核心修改] 保存单条成绩，对接到后端真实的数据库更新接口
+            submitOne(item) {
+                this.calcTotal(item); // 确保总分已计算
+
+                axios.post("http://localhost:8080/teacher/insertScore", Qs.stringify({
+                    // 传参映射：后端需要 userName(学号) 和 course_cno
+                    userName: item.student.student_sno,
+                    course_cno: this.currentCourseCno, // 使用当前课程号
+                    daily_score: item.daily_score,
+                    exam_score: item.exam_score,
+                    total_score: item.total_score
+                })).then(res => {
+                    if(res.data) {
+                        alert("成绩保存成功");
+                    } else {
+                        alert("保存失败，请检查输入或确认该学生已选课");
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    alert("系统错误，请检查网络");
+                });
+            },
+
+            backToCourseList() {
+                this.flag = 2;
+                this.title = '教学管理';
+                this.name = '我的课程';
+            },
+
+            // 切换菜单
+            changeTitle(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+                if(m === 0) {
+                    axios.post("http://localhost:8080/teacher/teacherInformation", Qs.stringify({
+                        teacher_tno: this.userName
+                    })).then(res => { this.lists = res.data[0]; });
+                }
+            },
+            chooseCourse(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+                this.loadCourseList();
+            },
+
+            // 修改信息
+            sureInfo() {
+                axios.post("http://localhost:8080/teacher/teacherUpdate", Qs.stringify(this.lists))
+                    .then(res => { alert("修改成功"); });
+            },
+
+            // 修改密码
+            resPwd() {
+                if(!this.resPwdf || this.resPwdf !== this.resPwdt) {
+                    alert("两次密码不一致"); return;
+                }
+                axios.post("http://localhost:8080/user/updataPassword", Qs.stringify({
+                    userName: this.userName, userPassword: this.resPwdt, usertype: "教师"
+                })).then(res => { if(res.data) alert("修改成功，请重新登录"); this.exit(); });
+            },
+
+            // 分页
+            xksyy() { if(this.xkPage > 1) { this.xkPage--; this.loadCourseList(); } },
+            xkxyy() { if(this.xkPage < this.xkPageNo) { this.xkPage++; this.loadCourseList(); } },
+            syy() { if(this.pageNo > 1) { this.pageNo--; this.loadStudentList(); } },
+            xyy() { this.pageNo++; this.loadStudentList(); },
+
+            exit() { window.location.href = "login"; },
+            app() { }
+        },
+        created() {
+            this.userName = localStorage.getItem("userName");
+            if(!this.userName) { alert("请登录"); window.location.href="login"; return;}
+
+            this.loadCourseList();
+            axios.post("http://localhost:8080/teacher/teacherInformation", Qs.stringify({
+                teacher_tno: this.userName
+            })).then(res => { this.lists = res.data[0]; });
+        }
+    })
+</script>
+</body>
+</html>

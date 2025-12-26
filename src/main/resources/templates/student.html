@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>学生管理</title>
+
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/iview@1.0.1/dist/styles/iview.css">
+    <script type="text/javascript" src="https://v1.vuejs.org/js/vue.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/iview@1.0.1/dist/iview.min.js"></script>
+    <script src="https://at.alicdn.com/t/font_1296423_92fclenj85a.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/qs.min.js"></script>
+</head>
+
+<body>
+<style>
+    /* 全局基础样式 */
+    #app, html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%; cursor: default;
+        font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    }
+
+    /* 布局框架样式 */
+    .layout { border: 1px solid #d7dde4; background: #f5f7f9; position: relative; height: 100vh; }
+    .layout-breadcrumb { padding: 10px 15px 0; }
+    .layout-content { height: 83vh; margin: 15px; overflow: auto; background: #fff; border-radius: 4px; }
+    .layout-content-main { padding: 20px; }
+    .layout-menu-left { background: #464c5b; height: 100%; }
+    .layout-header { height: 60px; background: #fff; box-shadow: 0 1px 1px rgba(0, 0, 0, .1); }
+    .title_content { display: flex; font-family: fontKai; justify-content: center; align-items: center; font-size: 35px; font-weight: bolder; color: #000; letter-spacing: 3px; }
+
+    /* 左侧用户信息栏 */
+    .layout-logo-left { width: 90%; height: 30px; background: #5b6270; border-radius: 3px; margin: 15px auto; color: #d7dde4; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+    .retut { cursor: pointer; border-bottom: 1px solid transparent; }
+    .retut:hover { border-bottom: 1px solid #fff; }
+
+    /* --- 卡片式选课列表样式 --- */
+    .course-grid { display: flex; flex-wrap: wrap; padding: 10px; }
+    .course-card {
+        width: 300px; margin: 15px; background: #fff; border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); transition: all 0.3s ease;
+        border: 1px solid #eee; display: flex; flex-direction: column;
+        overflow: hidden; position: relative;
+    }
+    .course-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12); border-color: #5cadff; }
+    .card-header-bar { height: 6px; background: linear-gradient(90deg, #2d8cf0, #5cadff); }
+    .card-content { padding: 20px; flex-grow: 1; }
+    .course-title { font-size: 18px; font-weight: bold; color: #17233d; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .credit-badge { background: #e8f4ff; color: #2d8cf0; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .course-info-item { margin-bottom: 10px; color: #515a6e; font-size: 14px; display: flex; align-items: center; }
+    .course-info-item i { margin-right: 8px; width: 20px; text-align: center; color: #808695; }
+
+    /* 进度条区域 */
+    .progress-area { margin-top: 20px; }
+    .progress-label { font-size: 12px; color: #808695; margin-bottom: 5px; display: flex; justify-content: space-between; }
+    .progress-track { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #19be6b; border-radius: 4px; transition: width 0.5s ease; }
+    .progress-fill.full { background: #ed4014; }
+
+    /* 卡片底部按钮 */
+    .card-footer { padding: 15px 20px; border-top: 1px solid #f8f8f9; background: #fafafa; text-align: right; }
+    .btn-select { background: #2d8cf0; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: background 0.2s; outline: none; }
+    .btn-select:hover { background: #57a3f3; }
+    .btn-select:disabled { background: #c5c8ce; cursor: not-allowed; }
+    /* 退选按钮样式 */
+    .btn-drop { background: #ed4014; }
+    .btn-drop:hover { background: #f16543; }
+
+    /* 分页条样式 */
+    .fenye { margin-top: 20px; display: flex; justify-content: center; align-items: center; width: 100%; }
+    .page-btn { padding: 5px 15px; margin: 0 10px; border: 1px solid #dcdee2; border-radius: 4px; cursor: pointer; background: #fff; }
+    .page-btn:hover { border-color: #2d8cf0; color: #2d8cf0; }
+
+    /* 表单及其他样式 */
+    .box_singal { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .singal_name { width: 40%; height: 40px; border: 1px solid #dcdee2; margin-bottom: 20px; border-radius: 4px; display: flex; }
+    .singal_name_title { width: 100px; background: #f8f8f9; border-right: 1px solid #dcdee2; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #515a6e; }
+    .name_content { flex: 1; border: none; padding: 0 10px; outline: none; }
+    .singal_stb { width: 120px; height: 40px; background: #2d8cf0; color: #fff; border-radius: 4px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+
+    /* 课表样式 */
+    .kebiao_title { display: flex; width: 100%; margin-top: 20px; background: #f8f8f9; font-weight: bold; }
+    .kebiao_title div { flex: 1; text-align: center; padding: 10px 0; border: 1px solid #e8eaec; border-right: none; }
+    .kebiao_title div:last-child { border-right: 1px solid #e8eaec; }
+    .box_xk_table { width: 100%; border-bottom: 1px solid #e8eaec; }
+    .box_tr { display: flex; }
+    .box_td { flex: 1; height: 100px; border: 1px solid #e8eaec; border-top: none; border-right: none; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 5px; font-size: 12px; }
+    .box_td:last-child { border-right: 1px solid #e8eaec; }
+
+    /* 成绩列表样式 */
+    .cj_list { width: 100%; max-width: 800px; margin: 0 auto; }
+    .cj_header { display: flex; background: #f8f8f9; font-weight: bold; padding: 12px 0; border: 1px solid #e8eaec; }
+    .cj_row { display: flex; border: 1px solid #e8eaec; border-top: none; padding: 12px 0; }
+    .cj_col { flex: 1; text-align: center; }
+
+    [v-cloak] { display: none; }
+</style>
+
+<div id="app" @click='app()' v-cloak>
+    <div class="layout">
+        <Row type="flex" style="height: 100%;">
+            <i-col span="5" class="layout-menu-left">
+                <Menu active-key="2-1" theme="dark" width="auto" :open-keys="['2']">
+                    <div class="layout-logo-left">
+                        <p>{{lists.student_name}}</p>
+                        <p class="retut" @click='exit'>退出</p>
+                    </div>
+                    <Submenu key="1">
+                        <template slot="title"><Icon type="ios-navigate"></Icon>用户管理</template>
+                        <Menu-item key="1-1" @click='changeTitle(0,"用户管理","个人信息")'>个人信息</Menu-item>
+                        <Menu-item key="1-2" @click='changeTitle(1,"用户管理","修改密码")'>修改密码</Menu-item>
+                    </Submenu>
+                    <Submenu key="2">
+                        <template slot="title"><Icon type="ios-keypad"></Icon>选课中心</template>
+                        <Menu-item key="2-1" @click='chooseCourse(2,"选课","课程选择")'>课程列表</Menu-item>
+                        <Menu-item key="2-2" @click='courseIn(3,"选课","选课信息")'>我的课表</Menu-item>
+                    </Submenu>
+                    <Submenu key="3">
+                        <template slot="title"><Icon type="ios-stats"></Icon>成绩查询</template>
+                        <Menu-item key="3-1" @click='courseInfo(4,"成绩","成绩查看")'>成绩单</Menu-item>
+                    </Submenu>
+                </Menu>
+            </i-col>
+
+            <i-col span="19">
+                <div class="layout-header title_content">学生选课管理系统</div>
+                <div class="layout-breadcrumb">
+                    <Breadcrumb>
+                        <Breadcrumb-item>首页</Breadcrumb-item>
+                        <Breadcrumb-item>{{title}}</Breadcrumb-item>
+                        <Breadcrumb-item>{{name}}</Breadcrumb-item>
+                    </Breadcrumb>
+                </div>
+
+                <div class="layout-content">
+                    <div class="layout-content-main">
+
+                        <div v-show="flag===0" class="box_singal">
+                            <h3>个人信息修改</h3><br>
+                            <div class="singal_name"><div class="singal_name_title">姓名</div><input type="text" class="name_content" v-model='lists.student_name'></div>
+                            <div class="singal_name"><div class="singal_name_title">学号</div><input type="text" class="name_content" :value="lists.student_sno" readonly></div>
+                            <div class="singal_name"><div class="singal_name_title">年龄</div><input type="text" class="name_content" :value="lists.student_age" readonly></div>
+                            <div class="singal_name"><div class="singal_name_title">班级</div><input type="text" class="name_content" :value="lists.student_class" readonly></div>
+                            <div class="singal_name"><div class="singal_name_title">出生日期</div><input type="text" class="name_content" v-model='lists.student_data'></div>
+                            <div class="singal_name"><div class="singal_name_title">电话</div><input type="text" class="name_content" v-model='lists.student_phone'></div>
+                            <div class="singal_name"><div class="singal_name_title">地址</div><input type="text" class="name_content" v-model='lists.student_address'></div>
+                            <div class="singal_stb" @click='sureInfo'>保存修改</div>
+                        </div>
+
+                        <div v-show="flag===1" style="display:flex; justify-content:center;">
+                            <div style="width:300px; padding:20px; border:1px solid #eee; border-radius:8px;">
+                                <h3 style="text-align:center; margin-bottom:20px;">修改密码</h3>
+                                <div style="margin-bottom:15px;">
+                                    <input type="password" placeholder="请输入新密码" v-model='resPwdf' style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <div style="margin-bottom:20px;">
+                                    <input type="password" placeholder="确认新密码" v-model='resPwdt' style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+                                </div>
+                                <button class="btn-select" style="width:100%;" @click='resPwd'>确认修改</button>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===2">
+                            <div class="course-grid">
+                                <div class="course-card" v-for="(index, item) in items" :key="index">
+                                    <div class="card-header-bar"></div>
+                                    <div class="card-content">
+                                        <div class="course-title">
+                                            <span>{{item.course.course_name}}</span>
+                                            <span class="credit-badge">{{item.course.credit}} 学分</span>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i>🆔</i> <span>课程号：{{item.course.course_cno}}</span>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i>👤</i> <span>任课教师：{{item.teacher_name}}</span>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i>🕒</i> <span>时间：周{{item.course.classTime.class_weekend}} / 第{{item.course.classTime.class_time}}节</span>
+                                        </div>
+                                        <div class="course-info-item">
+                                            <i>📖</i> <span>简介：{{item.course.course_information}}</span>
+                                        </div>
+
+                                        <div class="progress-area">
+                                            <div class="progress-label">
+                                                <span>已选人数</span>
+                                                <span>{{item.course.selected_num || 0}} / {{item.course.max_num || 50}}</span>
+                                            </div>
+                                            <div class="progress-track">
+                                                <div :class="['progress-fill', (item.course.selected_num >= item.course.max_num) ? 'full' : '']"
+                                                     :style="{width: ((item.course.selected_num || 0) / (item.course.max_num || 50) * 100) + '%'}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button v-if="isSelected(item.course.course_cno)"
+                                                class="btn-select btn-drop"
+                                                @click="deleteCourse(item.course.course_cno)">
+                                            退选课程
+                                        </button>
+
+                                        <button v-else
+                                                class="btn-select"
+                                                :disabled="item.course.selected_num >= item.course.max_num"
+                                                @click="singleChoose(item)">
+                                            {{ item.course.selected_num >= item.course.max_num ? '已满员' : '立即选课' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="fenye">
+                                <div class="page-btn" @click='xksyy'>上一页</div>
+                                <span>第 {{xkPage}} 页 / 共 {{xkPageNo}} 页</span>
+                                <div class="page-btn" @click='xkxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===3">
+                            <div class='kebiao_title'>
+                                <div>星期一</div><div>星期二</div><div>星期三</div><div>星期四</div><div>星期五</div><div>星期六</div><div>星期日</div>
+                            </div>
+                            <div class='box_xk_table'>
+                                <div class='box_tr' v-for='i in 6'>
+                                    <div class='box_td' v-for='j in 7'>
+                                        <span v-for='item in xuanke'
+                                              v-if='item.course.classTime.class_time - 1 === i && item.course.classTime.class_weekend - 1 === j'
+                                              style="font-weight:bold; color:#2d8cf0;">
+                                            {{item.course.course_name}}
+                                        </span>
+                                        <span v-for='item in xuanke'
+                                              v-if='item.course.classTime.class_time - 1 === i && item.course.classTime.class_weekend - 1 === j'
+                                              style="color:#808695; margin-top:5px;">
+                                            @{{item.teacher.teacher_name}}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="total-credits" style="margin-top:20px; text-align:center; font-weight:bold;">
+                                当前已修总学分: <span style="color:#ff9900; font-size:20px;">{{ totalCredits }}</span>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===4">
+                            <div class="cj_list">
+                                <div class="cj_header">
+                                    <div class="cj_col">课程名称</div>
+                                    <div class="cj_col">综合成绩</div>
+                                    <div class="cj_col">课程状态</div>
+                                </div>
+                                <div class="cj_row" v-for="item in grades">
+                                    <div class="cj_col">{{item.course.course_name}}</div>
+                                    <div class="cj_col" style="color:#ed4014; font-weight:bold;">
+                                        {{item.total_score == 0 ? '暂无' : item.total_score}}
+                                    </div>
+                                    <div class="cj_col">
+                                        <span v-if="item.total_score > 0" style="color:#19be6b;">已结课</span>
+                                        <span v-else style="color:#2d8cf0;">学习中</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                flag: 2,
+                title: '选课',
+                name: '课程选择',
+                lists: {},
+                items: [], // 所有课程列表
+                xuanke: [], // 已选课程列表 (Score对象)
+                grades: [],
+                totalCredits: 0,
+                userName: '',
+                password: '',
+                xkPage: 1,
+                xkPageNo: 1,
+                resPwdf: '',
+                resPwdt: ''
+            }
+        },
+        methods: {
+            // [新增] 判断课程是否已选
+            isSelected(cno) {
+                // 遍历已选课程列表，检查是否有匹配的 course_cno
+                return this.xuanke.some(record => record.course.course_cno === cno);
+            },
+
+            singleChoose(item) {
+                var _this = this;
+                if(item.course.selected_num >= item.course.max_num) {
+                    alert("手慢了！该课程名额已满。");
+                    return;
+                }
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/chooseCourse",
+                    transformRequest: [function (data) { return Qs.stringify(data); }],
+                    data: {
+                        student_sno: _this.userName,
+                        course_cno: item.course.course_cno,
+                        teacher_tno: item.teacher_tno
+                    }
+                }).then(result => {
+                    alert(result.data);
+                    if(result.data.indexOf("成功") !== -1){
+                        _this.reloadData(); // 选课成功后刷新数据
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    alert("系统繁忙，请稍后再试");
+                });
+            },
+
+            // [新增] 统一刷新数据方法，保证选课/退课后状态同步
+            reloadData() {
+                this.loadMyCourses(); // 先获取已选，更新 isSelected 状态
+                this.loadCourseList(); // 再获取列表，更新人数
+            },
+
+            loadCourseList() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/courseTeaSel",
+                    transformRequest: [function (data) { return Qs.stringify(data); }],
+                    data: {
+                        pageNopss: this.xkPage,
+                        course_name: '', teacher_name: '', course_cno: ''
+                    }
+                }).then(result => {
+                    this.items = result.data.teacher;
+                    this.xkPageNo = result.data.pageNo;
+                })
+            },
+            changeTitle(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+                this.userName = localStorage.getItem("userName");
+                if(m === 0) {
+                    axios.post("http://localhost:8080/student/studentInformation", Qs.stringify({
+                        student_sno: this.userName
+                    })).then(res => { this.lists = res.data[0]; });
+                }
+            },
+            chooseCourse(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+                this.reloadData(); // 切换回选课界面时刷新
+            },
+            courseIn(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+                this.loadMyCourses();
+            },
+            courseInfo(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+                this.loadMyCourses();
+            },
+            loadMyCourses() {
+                var _this = this;
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/student/courses",
+                    transformRequest: [function (data) { return Qs.stringify(data); }],
+                    data: {
+                        student_sno: this.userName,
+                        pageNopss: 1
+                    }
+                }).then(result => {
+                    _this.xuanke = result.data.score;
+                    _this.grades = result.data.score;
+                    _this.totalCredits = 0;
+                    if(_this.xuanke) {
+                        _this.xuanke.forEach(c => {
+                            _this.totalCredits += c.course.credit;
+                        });
+                    }
+                })
+            },
+            sureInfo() {
+                axios.post("http://localhost:8080/student/studentUpdate", Qs.stringify(this.lists))
+                    .then(res => {
+                        alert("修改成功");
+                        location.reload();
+                    });
+            },
+            resPwd() {
+                if(!this.resPwdf || this.resPwdf !== this.resPwdt) {
+                    alert("两次密码输入不一致或为空"); return;
+                }
+                axios.post("http://localhost:8080/user/updataPassword", Qs.stringify({
+                    userName: this.userName,
+                    userPassword: this.resPwdt,
+                    usertype: "学生"
+                })).then(res => { if(res.data) alert("修改成功"); });
+            },
+
+            // [修改] 直接接收课程号进行退课
+            deleteCourse(cno) {
+                if(!confirm('确定要退选课程 ' + cno + ' 吗？')) return;
+                var _this = this;
+                axios.post("http://localhost:8080/student/courseCancel", Qs.stringify({
+                    student_sno: this.userName,
+                    course_cno: cno
+                })).then(res => {
+                    if(res.data) {
+                        alert('退课成功');
+                        _this.reloadData(); // 退课成功后刷新两边数据
+                    } else {
+                        alert('退课失败：该课程已结课或不存在');
+                    }
+                });
+            },
+            xksyy() { if(this.xkPage > 1) { this.xkPage--; this.loadCourseList(); } },
+            xkxyy() { if(this.xkPage < this.xkPageNo) { this.xkPage++; this.loadCourseList(); } },
+            exit() { window.location.href = "login"; },
+            app() { }
+        },
+        created() {
+            this.userName = localStorage.getItem("userName");
+            axios.post("http://localhost:8080/admin/AdministorSelUser", Qs.stringify({
+                student_sno: this.userName, pageNopss: 1
+            })).then(res => { this.lists = res.data[0]; });
+
+            // 初始化时加载数据
+            this.reloadData();
+        }
+    })
+</script>
+</body>
+</html>

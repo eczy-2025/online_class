@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http//mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.onlineclass.dao.CourseDao">
+
+	<resultMap id="coursesSels" type="com.onlineclass.pojo.Teacher">
+		<id column="teacher_id" property="teacher_id" />
+		<result column="teacher_name" property="teacher_name" />
+		<result column="teacher_tno" property="teacher_tno" />
+		<result column="teacher_age" property="teacher_age" />
+		<result column="teacher_data" property="teacher_data" />
+		<result column="teacher_phone" property="teacher_phone" />
+		<result column="teacher_address" property="teacher_address" />
+		<result column="teacher_course_id" property="teacher_course_id" />
+
+		<association property="course" javaType="com.onlineclass.pojo.Course">
+			<id column="course_id" property="course_id" />
+			<result column="course_name" property="course_name" />
+			<result column="course_cno" property="course_cno" />
+			<result column="course_information" property="course_information" />
+
+			<result column="selected_num" property="selected_num" />
+			<result column="max_num" property="max_num" />
+
+			<result column="credit" property="credit" />
+			<association property="classTime" javaType="com.onlineclass.pojo.ClassTime">
+				<id column="time_id" property="time_id" />
+				<result column="course_cno" property="course_cno" />
+				<result column="class_weekend" property="class_weekend" />
+				<result column="class_time" property="class_time" />
+			</association>
+		</association>
+	</resultMap>
+
+	<select id="coursesSelPage" resultMap="coursesSels">
+		SELECT * from teacher,course,classtime where
+		teacher.teacher_course_id=course.course_cno
+		and 1=1
+		and
+		classtime.course_cno=course.course_cno
+		<if test="course_name!=''and course_name!=null">
+			and course.course_name like concat('%',#{course_name},'%')
+		</if>
+		<if test="course_cno!=''and course_cno!=null">
+			and course.course_cno like concat('%',#{course_cno},'%')
+		</if>
+		<if test="teacher_name!=''and teacher_name!=null">
+			and teacher.teacher_name like concat('%',#{teacher_name},'%')
+		</if>
+		<if test="teacher_tno!='' and teacher_tno!=null">
+			and teacher.teacher_tno = #{teacher_tno}
+		</if>
+		limit ${(pageNo-1)*pageSize},${pageSize};
+	</select>
+
+	<select id="coursesSel" resultMap="coursesSels">
+		SELECT * from teacher,course,classtime where
+		teacher.teacher_course_id=course.course_cno
+		and 1=1
+		and
+		classtime.course_cno=course.course_cno
+		<if test="course_name!=''and course_name!=null">
+			and course.course_name like concat('%',#{course_name},'%')
+		</if>
+		<if test="course_cno!=''and course_cno!=null">
+			and course.course_cno like concat('%',#{course_cno},'%')
+		</if>
+		<if test="teacher_name!=''and teacher_name!=null">
+			and teacher.teacher_name like concat('%',#{teacher_name},'%')
+		</if>
+	</select>
+
+
+	<resultMap id="scoreSels" type="com.onlineclass.pojo.Score">
+		<id column="score_id" property="score_id" />
+		<result column="daily_score" property="daily_score" />
+		<result column="exam_score" property="exam_score" />
+		<result column="total_score" property="total_score" />
+		<collection property="student" ofType="com.onlineclass.pojo.Student">
+			<id column="student_id" property="student_id" />
+			<result column="student_name" property="student_name" />
+			<result column="student_sno" property="student_sno" />
+			<result column="student_age" property="student_age" />
+			<result column="student_data" property="student_data" />
+			<result column="student_phone" property="student_phone" />
+			<result column="student_address" property="student_address" />
+			<result column="student_class" property="student_class" />
+		</collection>
+		<collection property="teacher" ofType="com.onlineclass.pojo.Teacher">
+			<id column="teacher_id" property="teacher_id" />
+			<result column="teacher_name" property="teacher_name" />
+			<result column="teacher_tno" property="teacher_tno" />
+			<result column="teacher_age" property="teacher_age" />
+			<result column="teacher_data" property="teacher_data" />
+			<result column="teacher_phone" property="teacher_phone" />
+			<result column="teacher_address" property="teacher_address" />
+		</collection>
+		<collection property="course" ofType="com.onlineclass.pojo.Course">
+			<id column="course_id" property="course_id" />
+			<result column="course_name" property="course_name" />
+			<result column="course_cno" property="course_cno" />
+			<result column="course_information" property="course_information" />
+
+			<result column="selected_num" property="selected_num" />
+			<result column="max_num" property="max_num" />
+
+			<result column="credit" property="credit" />
+			<collection property="classTime" ofType="com.onlineclass.pojo.ClassTime">
+				<id column="time_id" property="time_id" />
+				<result column="course_cno" property="course_cno" />
+				<result column="class_weekend" property="class_weekend" />
+				<result column="class_time" property="class_time" />
+			</collection>
+		</collection>
+	</resultMap>
+
+	<select id="scores" resultMap="scoreSels">
+		select * from score,student,teacher,course,classtime where
+		score.student_sno=student.student_sno
+		and
+		score.teacher_tno=teacher.teacher_tno
+		and
+		score.course_cno=course.course_cno
+		and
+		classtime.course_cno=course.course_cno
+		and 1=1
+		<if test="student_sno!=''and student_sno!=null">
+			and score.student_sno=#{student_sno}
+		</if>
+		<if test="course_cno!=''and course_cno!=null">
+			and course.course_cno=#{course_cno}
+		</if>
+		<if test="teacher_tno!=''and teacher_tno!=null">
+			and score.teacher_tno=#{teacher_tno}
+		</if>
+	</select>
+
+	<select id="scoresPage" resultMap="scoreSels">
+		select * from score,student,teacher,course,classtime where
+		score.student_sno=student.student_sno
+		and
+		score.teacher_tno=teacher.teacher_tno
+		and
+		score.course_cno=course.course_cno
+		and
+		classtime.course_cno=course.course_cno
+		and 1=1
+		<if test="student_sno!=''and student_sno!=null">
+			and score.student_sno=#{student_sno}
+		</if>
+		<if test="course_cno!=''and course_cno!=null">
+			and score.course_cno=#{course_cno}
+		</if>
+		<if test="teacher_tno!=''and teacher_tno!=null">
+			and score.teacher_tno=#{teacher_tno}
+		</if>
+		limit ${(pageNo-1)*pageSize},${pageSize}
+	</select>
+
+	<select id="scoresStu" resultMap="scoreSels">
+		select * from score,student,teacher,course,classtime where
+		score.student_sno=student.student_sno
+		and
+		score.teacher_tno=teacher.teacher_tno
+		and
+		score.course_cno=course.course_cno
+		and
+		classtime.course_cno=course.course_cno
+		and 1=1
+		<if test="student_sno!=''and student_sno!=null">
+			and score.student_sno=#{student_sno}
+		</if>
+		<if test="student_name!=''and student_name!=null">
+			and student.student_name like concat('%',#{student_name},'%')
+		</if>
+		<if test="teacher_name!=''and teacher_name!=null">
+			and teacher.teacher_name like concat('%',#{teacher_name},'%')
+		</if>
+		<if test="course_name!=''and course_name!=null">
+			and course.course_name like concat('%',#{course_name},'%')
+		</if>
+	</select>
+
+	<select id="scoresStuPage" resultMap="scoreSels">
+		select * from score,student,teacher,course,classtime where
+		score.student_sno=student.student_sno
+		and
+		score.teacher_tno=teacher.teacher_tno
+		and
+		score.course_cno=course.course_cno
+		and
+		classtime.course_cno=course.course_cno
+		and 1=1
+		<if test="student_sno!=''and student_sno!=null">
+			and score.student_sno=#{student_sno}
+		</if>
+		<if test="student_name!=''and student_name!=null">
+			and student.student_name like concat('%',#{student_name},'%')
+		</if>
+		<if test="teacher_name!=''and teacher_name!=null">
+			and teacher.teacher_name like concat('%',#{teacher_name},'%')
+		</if>
+		<if test="course_name!=''and course_name!=null">
+			and course.course_name like concat('%',#{course_name},'%')
+		</if>
+		limit ${(pageNo-1)*pageSize},${pageSize}
+	</select>
+
+
+	<resultMap id="coursesPage" type="com.onlineclass.pojo.Teacher">
+		<id column="teacher_id" property="teacher_id" />
+		<result column="teacher_name" property="teacher_name" />
+		<result column="teacher_tno" property="teacher_tno" />
+		<result column="teacher_age" property="teacher_age" />
+		<result column="teacher_data" property="teacher_data" />
+		<result column="teacher_phone" property="teacher_phone" />
+		<result column="teacher_address" property="teacher_address" />
+		<result column="teacher_course_id" property="teacher_course_id" />
+
+		<association property="course" javaType="com.onlineclass.pojo.Course">
+			<id column="course_id" property="course_id" />
+			<result column="course_name" property="course_name" />
+			<result column="course_cno" property="course_cno" />
+			<result column="course_information" property="course_information" />
+
+			<result column="selected_num" property="selected_num" />
+			<result column="max_num" property="max_num" />
+
+			<result column="credit" property="credit" />
+			<association property="classTime" javaType="com.onlineclass.pojo.ClassTime">
+				<id column="time_id" property="time_id" />
+				<result column="course_cno" property="course_cno" />
+				<result column="class_weekend" property="class_weekend" />
+				<result column="class_time" property="class_time" />
+			</association>
+		</association>
+	</resultMap>
+
+	<select id="getCourse" resultMap="coursesPage">
+		SELECT
+		course.*,
+		classtime.*,
+		teacher.*
+		FROM
+		course
+		LEFT JOIN classtime ON course.course_cno = classtime.course_cno
+		LEFT JOIN teacher ON course.course_cno = teacher.teacher_course_id
+		WHERE
+		1 = 1
+		<if test="course_cno != '' and course_cno != null">
+			AND course.course_cno LIKE CONCAT('%', #{course_cno}, '%')
+		</if>
+		<if test="course_name != '' and course_name != null">
+			AND course.course_name LIKE CONCAT('%', #{course_name}, '%')
+		</if>
+	</select>
+
+	<select id="getCoursePages" resultMap="coursesPage">
+		SELECT
+		course.*,
+		classtime.*,
+		teacher.*
+		FROM
+		course
+		LEFT JOIN classtime ON course.course_cno = classtime.course_cno
+		LEFT JOIN teacher ON course.course_cno = teacher.teacher_course_id
+		WHERE
+		1 = 1
+		<if test="course_cno!=''and course_cno!=null">
+			and course.course_cno like concat('%',#{course_cno},'%')
+		</if>
+		<if test="course_name!=''and course_name!=null">
+			and course.course_name like concat('%',#{course_name},'%')
+		</if>
+		limit ${(pageNo-1)*pageSize},${pageSize}
+	</select>
+
+	<select id="getTeacher" resultType="Teacher">
+		SELECT * from teacher where
+		teacher_tno=#{teacher_tno}
+	</select>
+
+	<update id="coursesUpdate" parameterType="Course">
+		UPDATE course set
+		course_name=#{course_name},course_information=#{course_information}
+		where course_cno=#{course_cno}
+	</update>
+
+	<delete id="coursesDel" parameterType="Course">
+		DELETE from course where 1=1
+		<if test="course_cno!=''and course_cno!=null">
+			and course_cno=#{course_cno}
+		</if>
+	</delete>
+
+	<insert id="coursesInsert" parameterType="Course">
+		INSERT into course(course_name,course_cno,course_information,selected_num,max_num,credit)
+		values(#{course_name},#{course_cno},#{course_information},#{selected_num},#{max_num},#{credit})
+	</insert>
+
+</mapper>

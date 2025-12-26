@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统登录 - 教学事务管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.bootcss.com/qs/6.6.0/qs.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f0f2f5;
+            background-image: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+        }
+
+        .login-container {
+            width: 900px;
+            height: 550px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 左侧装饰区 */
+        .left-panel {
+            width: 50%;
+            background: #2d8cf0;
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 40px;
+            position: relative;
+        }
+
+        .left-panel h1 { font-size: 32px; margin-bottom: 20px; font-weight: bold; letter-spacing: 2px; }
+        .left-panel p { font-size: 14px; opacity: 0.8; line-height: 1.8; text-align: center; }
+
+        .circle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1); }
+        .c1 { width: 100px; height: 100px; top: -20px; left: -20px; }
+        .c2 { width: 200px; height: 200px; bottom: -50px; right: -50px; }
+
+        /* 右侧表单区 */
+        .right-panel {
+            width: 50%;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-title { font-size: 24px; color: #333; margin-bottom: 30px; text-align: center; font-weight: 600; }
+
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; }
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+            background: #f9f9f9;
+        }
+        .input-field:focus { border-color: #764ba2; background: #fff; box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1); }
+
+        /* 角色选择 */
+        .role-group { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .role-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            margin: 0 5px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .role-item:hover { background: #f5f5f5; }
+        .role-item.active {
+            background: #764ba2;
+            color: #fff;
+            border-color: #764ba2;
+            box-shadow: 0 4px 10px rgba(118, 75, 162, 0.3);
+        }
+
+        /* 按钮 */
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4); }
+        .btn-login:active { transform: translateY(0); }
+
+        .footer-links { margin-top: 20px; text-align: center; font-size: 12px; color: #aaa; }
+        .footer-links span { cursor: pointer; margin: 0 10px; }
+        .footer-links span:hover { color: #764ba2; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="login-container">
+    <div class="left-panel">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <h1>Welcome</h1>
+        <p>欢迎使用教学事务管理系统<br>Teaching Affairs Management System</p>
+    </div>
+
+    <div class="right-panel">
+        <h2 class="login-title">账号登录</h2>
+
+        <div class="input-group">
+            <label>用户名 / 学号 / 工号</label>
+            <input type="text" class="input-field" v-model="form.userName" placeholder="请输入用户名" @keyup.enter="login">
+        </div>
+
+        <div class="input-group">
+            <label>密码</label>
+            <input type="password" class="input-field" v-model="form.userPassword" placeholder="请输入密码" @keyup.enter="login">
+        </div>
+
+        <label style="font-size:12px; color:#888; margin-bottom:5px; display:block;">选择角色</label>
+        <div class="role-group">
+            <div class="role-item" :class="{active: form.userType === '学生'}" @click="form.userType = '学生'">我是学生</div>
+            <div class="role-item" :class="{active: form.userType === '教师'}" @click="form.userType = '教师'">我是教师</div>
+            <div class="role-item" :class="{active: form.userType === '管理员'}" @click="form.userType = '管理员'">管理员</div>
+        </div>
+
+        <button class="btn-login" @click="login">登 录</button>
+
+        <div class="footer-links">
+            <span>忘记密码?</span> | <span>注册账号</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            form: {
+                userName: '',
+                userPassword: '',
+                userType: '学生'
+            }
+        },
+        methods: {
+            login() {
+                if (!this.form.userName || !this.form.userPassword) {
+                    alert("请输入用户名和密码");
+                    return;
+                }
+
+                // [核心修复] 对接 UserController.java 中的 userLogin 接口
+                axios({
+                    method: 'post',
+                    url: 'http://localhost:8080/user/userLogin', // 修正URL
+                    transformRequest: [function (data) { return Qs.stringify(data); }],
+                    data: {
+                        userName: this.form.userName,
+                        userPwd: this.form.userPassword, // 修正参数名: userPwd
+                        type: this.form.userType         // 修正参数名: type
+                    }
+                }).then(res => {
+                    console.log("登录响应:", res.data);
+
+                    // 后端返回字符串: "stu", "tea", "admin" 代表成功; "login" 代表失败
+                    const result = res.data;
+
+                    if (result === 'stu' || result === 'tea' || result === 'admin') {
+                        // 登录成功，缓存信息
+                        localStorage.setItem("userName", this.form.userName);
+                        localStorage.setItem("userType", this.form.userType);
+
+                        // 修正密码缓存 (你的 student.html 里用到了这个)
+                        localStorage.setItem("password", this.form.userPassword);
+
+                        // 根据返回值跳转
+                        if(result === 'stu') {
+                            window.location.href = "/student";
+                        } else if(result === 'tea') {
+                            window.location.href = "/teacher";
+                        } else if(result === 'admin') {
+                            window.location.href = "/admins";
+                        }
+                    } else {
+                        alert("登录失败：用户名或密码错误");
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    alert("连接服务器失败，请检查后端服务是否启动");
+                });
+            }
+        }
+    })
+</script>
+
+</body>
+</html>

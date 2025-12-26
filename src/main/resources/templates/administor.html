@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>管理员后台管理</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/iview@1.0.1/dist/styles/iview.css">
+    <script type="text/javascript" src="https://v1.vuejs.org/js/vue.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/iview@1.0.1/dist/iview.min.js"></script>
+    <script src="https://at.alicdn.com/t/font_1296423_92fclenj85a.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/js/qs.min.js"></script>
+</head>
+
+<body>
+<style>
+    /* --- 全局样式 (统一风格) --- */
+    #app, html, body { margin: 0; padding: 0; width: 100%; height: 100%; cursor: default; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f5f7f9; }
+    [v-cloak] { display: none; }
+
+    /* 布局框架 */
+    .layout { border: 1px solid #d7dde4; background: #f5f7f9; position: relative; height: 100vh; }
+    .layout-breadcrumb { padding: 10px 15px 0; }
+    .layout-content { height: 83vh; margin: 15px; overflow: auto; background: #fff; border-radius: 4px; }
+    .layout-content-main { padding: 20px; }
+    .layout-menu-left { background: #464c5b; height: 100%; }
+    .layout-header { height: 60px; background: #fff; box-shadow: 0 1px 1px rgba(0, 0, 0, .1); }
+    .title_content { display: flex; font-family: fontKai; justify-content: center; align-items: center; font-size: 35px; font-weight: bolder; color: #000; letter-spacing: 3px; }
+
+    .layout-logo-left { width: 90%; height: 30px; background: #5b6270; border-radius: 3px; margin: 15px auto; color: #d7dde4; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+    .retut { cursor: pointer; border-bottom: 1px solid transparent; }
+    .retut:hover { border-bottom: 1px solid #fff; }
+
+    /* --- 现代化表格样式 --- */
+    .modern-table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 15px; }
+    .modern-table th { background: #f8f9fa; color: #515a6e; font-weight: 600; padding: 12px; border-bottom: 2px solid #e8eaec; text-align: center;}
+    .modern-table td { padding: 12px; border-bottom: 1px solid #e8eaec; color: #515a6e; text-align: center;}
+    .modern-table tr:hover { background: #fcfcfc; }
+
+    /* --- 按钮样式 --- */
+    .btn-select { background: #2d8cf0; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: background 0.2s; outline: none; margin: 0 2px;}
+    .btn-select:hover { background: #57a3f3; }
+    .btn-delete { background: #ed4014; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: background 0.2s; outline: none; margin: 0 2px;}
+    .btn-delete:hover { background: #f16543; }
+    .btn-add { background: #19be6b; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; float: right; margin-bottom: 10px; }
+
+    /* --- 搜索栏样式 --- */
+    .search-bar { display: flex; align-items: center; margin-bottom: 15px; background: #f8f8f9; padding: 10px; border-radius: 4px; }
+    .search-input { padding: 8px; border: 1px solid #dcdee2; border-radius: 4px; width: 200px; outline: none; margin-right: 10px;}
+    .search-select { padding: 7px; border: 1px solid #dcdee2; border-radius: 4px; outline: none; margin-right: 10px; background: #fff;}
+
+    /* --- 弹窗样式 (Overlay) --- */
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+    .modal-card { background: #fff; width: 450px; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .form-item { margin-bottom: 15px; display: flex; align-items: center; }
+    .form-label { width: 80px; text-align: right; margin-right: 15px; font-weight: bold; color: #515a6e; }
+    .form-input { flex: 1; padding: 8px; border: 1px solid #dcdee2; border-radius: 4px; outline: none; }
+    .modal-footer { margin-top: 20px; text-align: center; }
+    .hidden { display: none !important; }
+
+    /* 分页 */
+    .fenye { margin-top: 20px; display: flex; justify-content: center; align-items: center; width: 100%; }
+    .page-btn { padding: 5px 15px; margin: 0 10px; border: 1px solid #dcdee2; border-radius: 4px; cursor: pointer; background: #fff; }
+    .page-btn:hover { border-color: #2d8cf0; color: #2d8cf0; }
+
+    /* 修改密码单页容器 */
+    .box_singal { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 20px;}
+</style>
+
+<div id="app" v-cloak>
+    <div class="layout">
+        <Row type="flex" style="height: 100%;">
+            <i-col span="5" class="layout-menu-left">
+                <Menu active-key="1-1" theme="dark" width="auto" :open-keys="['1']">
+                    <div class="layout-logo-left">
+                        <p>管理员 Admin</p>
+                        <p class="retut" @click='exit'>退出</p>
+                    </div>
+                    <Submenu key="1">
+                        <template slot="title"><Icon type="ios-navigate"></Icon>用户管理</template>
+                        <Menu-item key="1-1" @click='admin(0,"用户管理","登陆用户")'>登陆用户</Menu-item>
+                        <Menu-item key="1-2" @click='stuCtroll(1,"用户管理","学生信息")'>学生信息</Menu-item>
+                        <Menu-item key="1-3" @click='selTeache(2,"用户管理","教师信息")'>教师信息</Menu-item>
+                        <Menu-item key="1-4" @click='changeTitle(3,"用户管理","修改密码")'>修改密码</Menu-item>
+                    </Submenu>
+                    <Submenu key="2">
+                        <template slot="title"><Icon type="ios-keypad"></Icon>课程管理</template>
+                        <Menu-item key="2-1" @click='teaCtroll(4,"课程管理","课程信息")'>课程信息</Menu-item>
+                        <Menu-item key="2-2" @click='xkmanger(5,"课程管理","选课管理")'>选课管理</Menu-item>
+                    </Submenu>
+                    <Submenu key="3">
+                        <template slot="title"><Icon type="ios-analytics"></Icon>成绩管理</template>
+                        <Menu-item key="3-1" @click='xkmanger(6,"成绩","学生成绩")'>学生成绩</Menu-item>
+                    </Submenu>
+                </Menu>
+            </i-col>
+
+            <i-col span="19">
+                <div class="layout-header title_content">教学事务管理系统 - 后台</div>
+                <div class="layout-breadcrumb">
+                    <Breadcrumb>
+                        <Breadcrumb-item>首页</Breadcrumb-item>
+                        <Breadcrumb-item>{{title}}</Breadcrumb-item>
+                        <Breadcrumb-item>{{name}}</Breadcrumb-item>
+                    </Breadcrumb>
+                </div>
+
+                <div class="layout-content">
+                    <div class="layout-content-main">
+
+                        <div v-show="flag===0">
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="请输入用户名" v-model="adminsearch.con">
+                                <select class="search-select" v-model="adminsearch.type">
+                                    <option value="">全部</option>
+                                    <option value="学生">学生</option>
+                                    <option value="教师">教师</option>
+                                    <option value="管理员">管理员</option>
+                                </select>
+                                <button class="btn-select" @click='admSearch'>搜索</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>密码 (MD5)</th>
+                                    <th>用户类型</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index,item) in yonghu">
+                                    <td>{{item.user_name}}</td>
+                                    <td>{{item.user_password}}</td>
+                                    <td><span :style="{color: item.user_type==='管理员'?'red':'#515a6e'}">{{item.user_type}}</span></td>
+                                    <td>
+                                        <button class="btn-select" @click="changeI(index)">修改</button>
+                                        <button class="btn-delete" @click="spliceI(index)">删除</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="fenye">
+                                <div class="page-btn" @click='adminsyy'>上一页</div>
+                                <span>{{adminPage}} / {{adminNo}}</span>
+                                <div class="page-btn" @click='adminxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===1">
+                            <button class="btn-add" @click='addstu=1'>+ 添加学生</button>
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="输入关键词..." v-model="stusearch.con">
+                                <select class="search-select" v-model="searchType">
+                                    <option value="姓名">姓名</option>
+                                    <option value="学号">学号</option>
+                                    <option value="班级">班级</option>
+                                </select>
+                                <button class="btn-select" @click='stuSearch'>搜索</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>出生日期</th>
+                                    <th>班级</th>
+                                    <th>电话</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index,item) in stuList">
+                                    <td>{{item.student_sno}}</td>
+                                    <td>{{item.student_name}}</td>
+                                    <td>{{item.student_data}}</td>
+                                    <td>{{item.student_class}}</td>
+                                    <td>{{item.student_phone}}</td>
+                                    <td>
+                                        <button class="btn-select" @click="changestu(index)">修改</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="fenye">
+                                <div class="page-btn" @click='stusyy'>上一页</div>
+                                <span>{{stuPage}} / {{stuNo}}</span>
+                                <div class="page-btn" @click='stuxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===2">
+                            <button class="btn-add" @click='addteaa=1'>+ 添加教师</button>
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="输入关键词..." v-model="teasearch.con">
+                                <select class="search-select" v-model="teaType">
+                                    <option value="工号">工号</option>
+                                    <option value="姓名">姓名</option>
+                                </select>
+                                <button class="btn-select" @click='teaSearch'>搜索</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>工号</th>
+                                    <th>姓名</th>
+                                    <th>出生日期</th>
+                                    <th>负责课程</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index,item) in teaList">
+                                    <td>{{item.teacher_tno}}</td>
+                                    <td>{{item.teacher_name}}</td>
+                                    <td>{{item.teacher_data}}</td>
+                                    <td>{{item.course.course_name}}</td>
+                                    <td>
+                                        <button class="btn-select" @click='changeTea(index)'>修改</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="fenye">
+                                <div class="page-btn" @click='teasyy'>上一页</div>
+                                <span>{{teaPage}} / {{teaNo}}</span>
+                                <div class="page-btn" @click='teaxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===3" class="box_singal">
+                            <div class="modal-card" style="box-shadow:none; border:1px solid #eee;">
+                                <div class="modal-title">强制修改用户密码</div>
+                                <div v-show="i===0">
+                                    <div class="form-item"><div class="form-label">用户名</div><input type="text" class="form-input" v-model="admChange.username"></div>
+                                    <div class="form-item"><div class="form-label">原密码</div><input type="text" class="form-input" v-model="admChange.password"></div>
+                                    <div class="form-item">
+                                        <div class="form-label">角色</div>
+                                        <div style="display:flex; gap:10px;">
+                                            <label v-for="(n,item) in radios" :key="n" style="cursor:pointer">
+                                                <input type="radio" name="role" :value="item.name" @click='radioChoo(n)' :checked='item.ischecked'> {{item.name}}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer"><button class="btn-select" @click="restpass(n)" style="width:100%">验证并下一步</button></div>
+                                </div>
+                                <div v-show="i===1">
+                                    <div class="form-item"><div class="form-label">新密码</div><input type="password" class="form-input" v-model="admChange.restpassword"></div>
+                                    <div class="form-item"><div class="form-label">确认密码</div><input type="password" class="form-input" v-model="admChange.restpassword2"></div>
+                                    <div class="modal-footer">
+                                        <button class="btn-delete" @click='restpasswordre'>确认修改</button>
+                                        <button class="btn-select" @click="i=0" style="background:#fff; color:#515a6e; border:1px solid #dcdee2;">取消</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===4">
+                            <button class="btn-add" @click='addcourse="addcourse"'>+ 添加课程</button>
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="输入关键词..." v-model="coursesearch.con">
+                                <select class="search-select" v-model="courseType">
+                                    <option value="课程名">课程名</option>
+                                    <option value="课程号">课程号</option>
+                                </select>
+                                <button class="btn-select" @click='courseSearch'>搜索</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>课程号</th>
+                                    <th>课程名</th>
+                                    <th>学分</th>
+                                    <th>任课教师</th>
+                                    <th>周次/节次</th>
+                                    <th>简介</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index, item) in teaList">
+                                    <td>{{item.course.course_cno}}</td>
+                                    <td>{{item.course.course_name}}</td>
+                                    <td>{{item.course.credit}}</td>
+                                    <td>{{item.teacher_name}}</td>
+                                    <td>周{{item.course.classTime.class_weekend}} / 第{{item.course.classTime.class_time}}节</td>
+                                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{item.course.course_information}}</td>
+                                    <td>
+                                        <button class="btn-select" @click="changeCoursetea(index)">修改</button>
+                                        <button class="btn-delete" @click="deleteCourse(index)">删除</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="fenye">
+                                <div class="page-btn" @click='cousyy'>上一页</div>
+                                <span>{{couPage}} / {{couNo}}</span>
+                                <div class="page-btn" @click='couxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===5">
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="输入关键词..." v-model="xuankeseaddd.con">
+                                <select class="search-select" v-model="xuankeseaddd.type">
+                                    <option value="学号">学号</option>
+                                    <option value="班级">班级</option>
+                                </select>
+                                <button class="btn-select" @click='xuankSearch'>搜索</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>班级</th>
+                                    <th>课程名</th>
+                                    <th>任课教师</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index,item) in courseList">
+                                    <td>{{item.student.student_sno}}</td>
+                                    <td>{{item.student.student_name}}</td>
+                                    <td>{{item.student.student_class}}</td>
+                                    <td>{{item.course.course_name}}</td>
+                                    <td>{{item.teacher.teacher_name}}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="fenye">
+                                <div class="page-btn" @click='xkcousyy'>上一页</div>
+                                <span>{{xkcouPage}} / {{xkcouNo}}</span>
+                                <div class="page-btn" @click='xkcouxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                        <div v-show="flag===6">
+                            <div class="search-bar">
+                                <input type="text" class="search-input" placeholder="输入关键词..." v-model="gradeses.con">
+                                <select class="search-select" v-model="gradestype">
+                                    <option value="学号">学号</option>
+                                    <option value="学生姓名">学生姓名</option>
+                                    <option value="课程名">课程名</option>
+                                    <option value="教师名">教师名</option>
+                                </select>
+                                <button class="btn-select" @click='searchGrades'>搜索</button>
+                            </div>
+
+                            <table class="modern-table">
+                                <thead>
+                                <tr>
+                                    <th>学号</th>
+                                    <th>姓名</th>
+                                    <th>课程名</th>
+                                    <th>平时分</th>
+                                    <th>考试分</th>
+                                    <th>总分</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(index,item) in courseList">
+                                    <td>{{item.student.student_sno}}</td>
+                                    <td>{{item.student.student_name}}</td>
+                                    <td>{{item.course.course_name}}</td>
+                                    <td>{{item.daily_score}}</td>
+                                    <td>{{item.exam_score}}</td>
+                                    <td style="font-weight:bold; color:#2d8cf0">{{item.total_score}}</td>
+                                    <td>
+                                        <button class="btn-select" @click="gradesChange(index)">修改成绩</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="fenye">
+                                <div class="page-btn" @click='xkcousyy'>上一页</div>
+                                <span>{{xkcouPage}} / {{xkcouNo}}</span>
+                                <div class="page-btn" @click='xkcouxyy'>下一页</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </i-col>
+        </Row>
+
+        <div class="overlay" :class="{hidden: sure === 'sure_'}" id='sure'>
+            <div class="modal-card">
+                <div class="modal-title">修改用户信息</div>
+                <div class="form-item"><div class="form-label">用户名</div><input type="text" class="form-input" v-model="admChange.user_name"></div>
+                <div class="form-item">
+                    <div class="form-label">类型</div>
+                    <div style="display:flex; gap:10px;">
+                        <label v-for="(n,item) in radios" :key="n" style="cursor:pointer">
+                            <input type="radio" name="role_edit" :checked='item.ischecked' @click='radioChoo(n)'> {{item.name}}
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click='changeInfo()'>确定</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='quxiao'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" :class="{hidden: stuch === 'stuch_'}">
+            <div class="modal-card">
+                <div class="modal-title">修改学生信息</div>
+                <div class="form-item"><div class="form-label">学号</div><input type="text" class="form-input" v-model="changestudent.student_sno"></div>
+                <div class="form-item"><div class="form-label">姓名</div><input type="text" class="form-input" v-model="changestudent.student_name"></div>
+                <div class="form-item"><div class="form-label">班级</div><input type="text" class="form-input" v-model="changestudent.student_class"></div>
+                <div class="form-item"><div class="form-label">出生日期</div><input type="text" class="form-input" v-model="changestudent.student_data"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="surechangestu">确定</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='stuch="stuch_"'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" :class="{hidden: teachansae === 'teachansae_'}">
+            <div class="modal-card">
+                <div class="modal-title">修改教师信息</div>
+                <div class="form-item"><div class="form-label">工号</div><input type="text" class="form-input" v-model="teachansa.teacher_tno"></div>
+                <div class="form-item"><div class="form-label">姓名</div><input type="text" class="form-input" v-model="teachansa.teacher_name"></div>
+                <div class="form-item"><div class="form-label">出生日期</div><input type="text" class="form-input" v-model="teachansa.teacher_data"></div>
+                <div class="form-item"><div class="form-label">联系电话</div><input type="text" class="form-input" v-model="teachansa.teacher_phone"></div>
+                <div class="form-item"><div class="form-label">地址</div><input type="text" class="form-input" v-model="teachansa.teacher_address"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="sureTea">确定</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='teachansae="teachansae_"'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" :class="{hidden: teacourchansae === 'teacourchansae_'}" v-if="teacouchansa.course">
+            <div class="modal-card">
+                <div class="modal-title">修改课程信息</div>
+                <div class="form-item"><div class="form-label">课程号</div><input type="text" class="form-input" v-model="teacouchansa.course.course_cno" readonly></div>
+                <div class="form-item"><div class="form-label">课程名</div><input type="text" class="form-input" v-model="teacouchansa.course.course_name"></div>
+                <div class="form-item"><div class="form-label">学分</div><input type="number" class="form-input" v-model="teacouchansa.course.credit"></div>
+                <div class="form-item"><div class="form-label">简介</div><input type="text" class="form-input" v-model="teacouchansa.course.course_information"></div>
+                <div class="form-item"><div class="form-label">周次</div><input type="number" class="form-input" v-model="teacouchansa.course.classTime.class_weekend"></div>
+                <div class="form-item"><div class="form-label">节次</div><input type="number" class="form-input" v-model="teacouchansa.course.classTime.class_time"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="surechanTea">确定</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='teacourchansae="teacourchansae_"'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" :class="{hidden: gradesliss === 'gradesList_'}" v-if="gradeslist.student">
+            <div class="modal-card">
+                <div class="modal-title">修改成绩</div>
+                <div class="form-item"><div class="form-label">学号</div><input type="text" class="form-input" :value="gradeslist.student.student_sno" disabled></div>
+                <div class="form-item"><div class="form-label">姓名</div><input type="text" class="form-input" :value="gradeslist.student.student_name" disabled></div>
+                <div class="form-item"><div class="form-label">平时成绩</div><input type="number" class="form-input" v-model="gradeslist.daily_score"></div>
+                <div class="form-item"><div class="form-label">考试成绩</div><input type="number" class="form-input" v-model="gradeslist.exam_score"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="sureGrades">保存</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='gradesliss="gradesList_"'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" :class="{hidden: addcourse === 'addcourse_'}">
+            <div class="modal-card">
+                <div class="modal-title">添加新课程</div>
+                <div class="form-item"><div class="form-label">课程号</div><input type="text" class="form-input" v-model="addcou.course_cno"></div>
+                <div class="form-item"><div class="form-label">课程名</div><input type="text" class="form-input" v-model="addcou.course_name"></div>
+                <div class="form-item"><div class="form-label">学分</div><input type="number" class="form-input" v-model="addcou.credit"></div>
+                <div class="form-item"><div class="form-label">课程号</div><input type="text" class="form-input" v-model="addcou.course_cno"></div>
+                <div class="form-item"><div class="form-label">任课教师</div><input type="text" class="form-input" v-model="addcou.teacher_name" placeholder="请输入教师姓名"></div>
+                <div class="form-item"><div class="form-label">简介</div><input type="text" class="form-input" v-model="addcou.course_information"></div>
+                <div class="form-item"><div class="form-label">周次</div><input type="number" class="form-input" v-model="addcou.classTime.class_weekend" placeholder="1-7"></div>
+                <div class="form-item"><div class="form-label">节次</div><input type="number" class="form-input" v-model="addcou.classTime.class_time" placeholder="1-5"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="addCourse">添加</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='addcourse="addcourse_"'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" v-show="addstu===1">
+            <div class="modal-card">
+                <div class="modal-title">添加学生</div>
+                <div class="form-item"><div class="form-label">学号</div><input type="text" class="form-input" v-model="addstudentt.student_sno"></div>
+                <div class="form-item"><div class="form-label">姓名</div><input type="text" class="form-input" v-model="addstudentt.student_name"></div>
+                <div class="form-item"><div class="form-label">班级</div><input type="text" class="form-input" v-model="addstudentt.student_class"></div>
+                <div class="form-item"><div class="form-label">初始密码</div><input type="text" class="form-input" v-model="addstudentt.password"></div>
+                <div class="form-item"><div class="form-label">出生日期</div><input type="text" class="form-input" v-model="addstudentt.student_data"></div>
+                <div class="form-item"><div class="form-label">电话</div><input type="text" class="form-input" v-model="addstudentt.student_phone"></div>
+                <div class="form-item"><div class="form-label">地址</div><input type="text" class="form-input" v-model="addstudentt.address"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="addstudente">添加</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='addstu=0'>取消</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" v-show="addteaa===1">
+            <div class="modal-card">
+                <div class="modal-title">添加教师</div>
+                <div class="form-item"><div class="form-label">工号</div><input type="text" class="form-input" v-model="addteaater.teacher_tno"></div>
+                <div class="form-item"><div class="form-label">姓名</div><input type="text" class="form-input" v-model="addteaater.teacher_name"></div>
+                <div class="form-item"><div class="form-label">负责课程号</div><input type="text" class="form-input" v-model="addteaater.teacher_course_id"></div>
+                <div class="form-item"><div class="form-label">初始密码</div><input type="text" class="form-input" v-model="addteaater.teacher_password"></div>
+                <div class="form-item"><div class="form-label">出生日期</div><input type="text" class="form-input" v-model="addteaater.teacher_data"></div>
+                <div class="form-item"><div class="form-label">电话</div><input type="text" class="form-input" v-model="addteaater.teacher_phone"></div>
+                <div class="form-item"><div class="form-label">地址</div><input type="text" class="form-input" v-model="addteaater.teacher_address"></div>
+                <div class="modal-footer">
+                    <button class="btn-select" @click="addteacher">添加</button>
+                    <button class="btn-delete" style="background:#fff; color:#333; border:1px solid #ccc" @click='addteaa=0'>取消</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                flag: 0,
+                title: '用户管理',
+                name: '登陆用户',
+
+                // 搜索对象
+                adminsearch: { con: '', type: '' },
+                stusearch: { con: '', type: '' },
+                teasearch: { con: '', type: '' },
+                coursesearch: { con: '' },
+                xuankeseaddd: { con: '', type: '学号' },
+                gradeses: { con: '' },
+
+                // 下拉选择
+                searchType: "学号",
+                teaType: "工号",
+                courseType: "课程名",
+                gradestype: '学号',
+
+                // 数据列表
+                yonghu: [],
+                stuList: [],
+                teaList: [],
+                courseList: [],
+
+                // 表单对象
+                addcou: { classTime: {} },
+                addstudentt: {},
+                addteaater: {},
+                admChange: {},
+                changestudent: {},
+                teachansa: {},
+                teacouchansa: { course: { classTime: {} }, teacher: {} },
+                gradeslist: { student: {}, course: {}, teacher: {} },
+
+                // 状态标记
+                i: 0,
+                addstu: 0,
+                addteaa: 0,
+                addcourse: "addcourse_",
+                sure: 'sure_',
+                stuch: 'stuch_',
+                teachansae: "teachansae_",
+                teacourchansae: "teacourchansae_",
+                gradesliss: "gradesList_",
+
+                // 分页
+                adminPage: 1, adminNo: 1,
+                stuPage: 1, stuNo: 1,
+                teaPage: 1, teaNo: 1,
+                couPage: 1, couNo: 1,
+                xkcouPage: 1, xkcouNo: 1,
+
+                radios: [
+                    { name: '学生', title: 'stu', ischecked: false },
+                    { name: '教师', title: 'tea', ischecked: false },
+                    { name: '管理员', title: 'adm', ischecked: false }
+                ]
+            }
+        },
+        created () {
+            this.admin(0,"用户管理","登陆用户");
+        },
+        methods: {
+            radioChoo(n) {
+                this.radios.forEach((element) => {
+                    if (n.name === element.name) {
+                        element.ischecked = true;
+                        this.admChange.student_name = element.name;
+                    } else {
+                        element.ischecked = false;
+                    }
+                });
+            },
+            changeTitle(m, n, q) {
+                this.flag = m; this.title = n; this.name = q;
+            },
+            quxiao() {
+                this.sure = "sure_";
+            },
+            exit(){
+                window.location.href="login";
+            },
+
+            // --- 1. 用户管理 ---
+            admin(m, n, q){
+                this.flag = m; this.title = n; this.name = q;
+                this.loadAdminList();
+            },
+            loadAdminList() {
+                axios.post("http://localhost:8080/admin/AdministorSelUser", Qs.stringify({
+                    user_name: this.adminsearch.con,
+                    user_type: this.adminsearch.type,
+                    pageNopss: this.adminPage
+                })).then(result => {
+                    this.yonghu = result.data.user;
+                    this.adminNo = result.data.pageNo;
+                });
+            },
+            admSearch(){
+                this.adminPage = 1;
+                this.loadAdminList();
+            },
+            changeI(index){
+                this.sure = "sure";
+                this.admChange = JSON.parse(JSON.stringify(this.yonghu[index])); // Deep copy
+                this.radios.forEach((item)=>{
+                    item.ischecked = (item.name === this.admChange.user_type);
+                });
+                this.admChange.student_name = this.admChange.user_type; // Init selection
+            },
+            changeInfo() {
+                if(confirm("确定修改？")){
+                    axios.post("http://localhost:8080/admin/AdminUpdateUser", Qs.stringify({
+                        user_name: this.admChange.user_name,
+                        user_type: this.admChange.student_name
+                    })).then(result => {
+                        this.sure = "sure_";
+                        this.loadAdminList();
+                        alert("修改成功");
+                    });
+                }
+            },
+            spliceI(index){
+                if(confirm("确定删除？")){
+                    axios.post("http://localhost:8080/admin/AdminDelUser", Qs.stringify({
+                        user_name: this.yonghu[index].user_name,
+                        user_type: this.yonghu[index].user_type
+                    })).then(result => {
+                        this.loadAdminList();
+                        alert("删除成功");
+                    });
+                }
+            },
+            adminsyy(){ if(this.adminPage>1) {this.adminPage--; this.loadAdminList();} },
+            adminxyy(){ if(this.adminPage<this.adminNo) {this.adminPage++; this.loadAdminList();} },
+
+            // --- 2. 学生管理 ---
+            stuCtroll(m, n, q){
+                this.flag = m; this.title = n; this.name = q;
+                this.stuPage = 1;
+                this.loadStuList();
+            },
+            loadStuList(){
+                let data = { student_name:'', student_class:'', student_sno:'', teacher_tno:'', pageNopss: this.stuPage };
+                if(this.stusearch.con){
+                    if(this.searchType == "学号") data.student_sno = this.stusearch.con;
+                    if(this.searchType == "姓名") data.student_name = this.stusearch.con;
+                    if(this.searchType == "班级") data.student_class = this.stusearch.con;
+                }
+                axios.post("http://localhost:8080/teacher/teaSelStudentsPage", Qs.stringify(data))
+                    .then(result => {
+                        this.stuList = result.data.student;
+                        this.stuNo = result.data.pageNo;
+                    });
+            },
+            stuSearch(){ this.stuPage=1; this.loadStuList(); },
+            changestu(index){
+                this.stuch = 'stuch';
+                this.changestudent = JSON.parse(JSON.stringify(this.stuList[index]));
+            },
+            surechangestu(){
+                axios.post("http://localhost:8080/student/studentUpdate", Qs.stringify(this.changestudent))
+                    .then(result => {
+                        if(result.data){
+                            this.stuch='stuch_';
+                            this.loadStuList();
+                            alert("修改成功");
+                        }
+                    });
+            },
+            addstudente(){
+                axios.post("http://localhost:8080/user/studentRegister", Qs.stringify(this.addstudentt))
+                    .then(result => {
+                        if(result.data){
+                            this.addstu=0;
+                            this.addstudentt={};
+                            this.loadStuList();
+                            alert("添加成功");
+                        } else { alert("添加失败，学号可能已存在"); }
+                    });
+            },
+            stusyy(){ if(this.stuPage>1) {this.stuPage--; this.loadStuList();} },
+            stuxyy(){ if(this.stuPage<this.stuNo) {this.stuPage++; this.loadStuList();} },
+
+            // --- 3. 教师管理 ---
+            selTeache(m,n,q){
+                this.flag = m; this.title = n; this.name = q;
+                this.teaPage = 1;
+                this.loadTeaList();
+            },
+            loadTeaList(){
+                let data = { teacher_name:"", teacher_tno:"", pageNopss: this.teaPage };
+                if(this.teasearch.con){
+                    if(this.teaType == "工号") data.teacher_tno = this.teasearch.con;
+                    if(this.teaType == "姓名") data.teacher_name = this.teasearch.con;
+                }
+                axios.post("http://localhost:8080/admin/adminSelTeacherPage", Qs.stringify(data))
+                    .then(result => {
+                        this.teaList = result.data.teacher;
+                        this.teaNo = result.data.pageNo;
+                    });
+            },
+            teaSearch(){ this.teaPage=1; this.loadTeaList(); },
+            changeTea(index){
+                this.teachansa = JSON.parse(JSON.stringify(this.teaList[index]));
+                if(!this.teachansa.course) this.teachansa.course = {};
+                this.teachansa.course_name = this.teachansa.course.course_name;
+                this.teachansae = "teachansae";
+            },
+            sureTea(){
+                axios.post("http://localhost:8080/teacher/teacherUpdateInformation", Qs.stringify(this.teachansa))
+                    .then(result => {
+                        if(result.data){
+                            this.teachansae="teachansae_";
+                            this.loadTeaList();
+                            alert("修改成功");
+                        }
+                    });
+            },
+            addteacher(){
+                axios.post("http://localhost:8080/user/teacherRegister", Qs.stringify(this.addteaater))
+                    .then(result => {
+                        if(result.data){
+                            alert("成功");
+                            this.addteaater={};
+                            this.addteaa=0;
+                            this.loadTeaList();
+                        }else{ alert("错误"); }
+                    });
+            },
+            teasyy(){ if(this.teaPage>1) {this.teaPage--; this.loadTeaList();} },
+            teaxyy(){ if(this.teaPage<this.teaNo) {this.teaPage++; this.loadTeaList();} },
+
+            // --- 4. 课程管理 ---
+            teaCtroll(m,n,q){
+                this.flag = m; this.title = n; this.name = q;
+                this.couPage=1;
+                this.loadCourseInfoList();
+            },
+            loadCourseInfoList(){
+                let data = { course_name:'', course_cno:'', pageNopss: this.couPage };
+                if(this.coursesearch.con){
+                    if(this.courseType=='课程名') data.course_name = this.coursesearch.con;
+                    if(this.courseType=='课程号') data.course_cno = this.coursesearch.con;
+                }
+                axios.post("http://localhost:8080/courseSel", Qs.stringify(data))
+                    .then(result => {
+                        this.teaList=result.data.course; // 复用 teaList 变量
+                        this.couNo=result.data.pageNo;
+                    });
+            },
+            courseSearch(){ this.couPage=1; this.loadCourseInfoList(); },
+            changeCoursetea(index){
+                this.teacourchansae="teacourchansae";
+                this.teacouchansa = JSON.parse(JSON.stringify(this.teaList[index]));
+            },
+            surechanTea() {
+                axios.post("http://localhost:8080/courses/coursesUpdate", Qs.stringify({
+                    course_cno: this.teacouchansa.course.course_cno,
+                    course_name: this.teacouchansa.course.course_name,
+                    course_information: this.teacouchansa.course.course_information,
+                    class_weekend: this.teacouchansa.course.classTime.class_weekend,
+                    class_time: this.teacouchansa.course.classTime.class_time,
+                    teacher_name: this.teacouchansa.teacher_name,
+                    credit: this.teacouchansa.course.credit,
+                    pageNopss: 1
+                })).then(result => {
+                    if (result.data.messgae === "0") {
+                        alert("修改失败！课程时间冲突！");
+                    } else {
+                        this.teaList = result.data.course;
+                        this.teacourchansae = "teacourchansae_";
+                        alert("修改成功！！");
+                    }
+                });
+            },
+            addCourse() {
+                axios.post("http://localhost:8080/courses/coursesIns", Qs.stringify({
+                    course_cno: this.addcou.course_cno,
+                    course_name: this.addcou.course_name,
+                    course_information: this.addcou.course_information,
+                    class_weekend: this.addcou.classTime.class_weekend,
+                    class_time: this.addcou.classTime.class_time,
+                    teacher_name: this.addcou.teacher_name,
+                    credit: this.addcou.credit,
+                    pageNopss: 1
+                })).then(result => {
+                    if (result.data.messgae === "0") {
+                        alert("添加失败！课程名或课程时间冲突！");
+                    } else {
+                        this.teaList = result.data.course;
+                        this.addcourse = "addcourse_";
+                        alert("添加课程成功！！");
+                    }
+                });
+            },
+            deleteCourse(index) {
+                if (confirm("确定删除课程？")) {
+                    axios.post("http://localhost:8080/courses/coursesDel", Qs.stringify({
+                        course_cno: this.teaList[index].course.course_cno,
+                        pageNopss: this.couPage
+                    })).then(result => {
+                        if (result.data.messgae === "0") {
+                            alert("课程不可删除！！学生或教师已选择！！！");
+                        } else {
+                            this.teaList = result.data.course;
+                            this.couPage = result.data.pageNo;
+                            alert("删除成功");
+                        }
+                    });
+                }
+            },
+            cousyy(){ if(this.couPage>1) {this.couPage--; this.loadCourseInfoList();} },
+            couxyy(){ if(this.couPage<this.couNo) {this.couPage++; this.loadCourseInfoList();} },
+
+            // --- 5 & 6. 选课管理 & 成绩管理 ---
+            xkmanger(m,n,q){
+                this.flag = m; this.title = n; this.name = q;
+                this.xkcouPage=1;
+                this.loadScoreList();
+            },
+            loadScoreList(){
+                let data = { student_sno:'', course_cno:'', teacher_tno:'', pageNopss: this.xkcouPage };
+                if(this.flag === 5) { // 选课搜索
+                    if(this.xuankeseaddd.type=='学号') data.student_sno = this.xuankeseaddd.con;
+                    if(this.xuankeseaddd.type=='班级') data.student_class = this.xuankeseaddd.con; // 后端需支持
+                }
+                axios.post("http://localhost:8080/student/courses", Qs.stringify(data))
+                    .then(result => {
+                        this.courseList = result.data.score;
+                        this.xkcouNo = result.data.pageNo;
+                    });
+            },
+            xuankSearch(){ this.xkcouPage=1; this.loadScoreList(); },
+            searchGrades(){
+                let data = { student_sno:'', student_name:'', teacher_name:'', course_name:'', pageNopss:1 };
+                if(this.gradestype=="学号") data.student_sno = this.gradeses.con;
+                if(this.gradestype=="学生姓名") data.student_name = this.gradeses.con;
+                if(this.gradestype=="教师名") data.teacher_name = this.gradeses.con;
+                if(this.gradestype=="课程名") data.course_name = this.gradeses.con;
+
+                axios.post("http://localhost:8080/student/coursesStu", Qs.stringify(data))
+                    .then(result => {
+                        this.courseList=result.data.score;
+                        this.xkcouNo=result.data.pageNo;
+                    });
+            },
+            gradesChange(index){
+                this.gradeslist = JSON.parse(JSON.stringify(this.courseList[index]));
+                this.gradesliss="gradesList";
+            },
+            sureGrades(){
+                axios.post("http://localhost:8080/teacher/insertScore", Qs.stringify({
+                    userName: this.gradeslist.student.student_sno,
+                    course_cno: this.gradeslist.course.course_cno,
+                    daily_score: this.gradeslist.daily_score,
+                    exam_score: this.gradeslist.exam_score,
+                    total_score: this.gradeslist.total_score,
+                })).then(result => {
+                    if(result.data){
+                        alert("修改成功");
+                        this.gradesliss="gradesList_";
+                        this.loadScoreList();
+                    }
+                });
+            },
+            xkcousyy(){ if(this.xkcouPage>1) {this.xkcouPage--; this.loadScoreList();} },
+            xkcouxyy(){ if(this.xkcouPage<this.xkcouNo) {this.xkcouPage++; this.loadScoreList();} },
+
+            // --- 密码管理 ---
+            restpass(n){
+                axios.post("http://localhost:8080/user/userLogin", Qs.stringify({
+                    userName: this.admChange.username,
+                    userPwd: this.admChange.password,
+                    type: this.admChange.student_name
+                })).then(result => {
+                    if(result.data=='stu'||result.data=='tea'||result.data=='admin'){
+                        this.i=1;
+                    }else{ alert("用户不存在或密码错误"); }
+                });
+            },
+            restpasswordre(){
+                if(this.admChange.restpassword === this.admChange.restpassword2){
+                    axios.post("http://localhost:8080/user/updataPassword", Qs.stringify({
+                        userName: this.admChange.username,
+                        userPassword: this.admChange.restpassword,
+                        usertype: this.admChange.student_name
+                    })).then(result => {
+                        if(result.data){
+                            alert("密码修改成功");
+                            this.i=0;
+                        }else{ alert("修改失败"); }
+                    });
+                }else{ alert("两次输入密码不一致"); }
+            }
+        }
+    })
+</script>
+</body>
+</html>

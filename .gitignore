@@ -1,0 +1,18 @@
+# Maven 编译输出目录 (里面几百兆的 jar 包不需要上传)
+target/
+
+# IntelliJ IDEA 配置文件
+.idea/
+*.iml
+
+# Eclipse 配置文件
+.settings/
+.classpath
+.project
+
+# 系统生成文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
